@@ -5,3 +5,5 @@ diffusers
 git+https://github.com/huggingface/transformers
 accelerate
 ftfy
+transformers
+gradio
