@@ -2,6 +2,8 @@ from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline, D
 import gradio as gr
 import torch
 from PIL import Image
+from gpt_model import *
+from sd_model import *
 
 model_id = 'andite/anything-v4.0'
 prefix = ''
@@ -112,11 +114,6 @@ with gr.Blocks(css=css) as demo:
             temperature = gr.Slider(value=0.9,label="Temperature",minimum=0.0,maximum=1.0,step=0.05)
             repetition_penalty = gr.Slider(value=1.5,label="Repetition penalty",minimum=0.2,maximum=2,step=0.1)
             output1 = gr.Textbox(lines=4,label='1')
-            send1 = gr.Button("Send1 to Origin Textbox").click(send,inputs=[textbox,context,output1],outputs=textbox)
-            output2 = gr.Textbox(lines=4,label='2')
-            send2 = gr.Button("Send2 to Origin Textbox").click(send,inputs=[textbox,context,output2],outputs=textbox)
-            output3 = gr.Textbox(lines=4,label='3')
-            send3 = gr.Button("Send3 to Origin Textbox").click(send,inputs=[textbox,context,output3],outputs=textbox)
             btn.click(complete_with_gpt,inputs=[textbox,context,the_model,max_length,temperature,repetition_penalty], outputs=[output1,output2,output3])
         
 
