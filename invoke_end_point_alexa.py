@@ -2,6 +2,8 @@ import streamlit as st
 import boto3
 import json
 import io
+from util import *
+
 
 sagemaker_runtime = boto3.client('runtime.sagemaker')
 
@@ -38,6 +40,13 @@ st.header("Few Shot Playground")
 endpoint_name='gpt-j-deploy-2023-01-21-20-01-49-923'
 length=50 # max length variation
 
+# SM End Points dropList
+sm_endpoint_opts=list_sm_endpoints()
+sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
+if st.sidebar.button('refresh sm endpoints'):
+    new_options = list_sm_endpoints()
+    selected_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options)
+
 # End Point names
 endpoint_name_radio = st.sidebar.selectbox(
     "Select the endpoint to run in SageMaker",
@@ -50,6 +59,11 @@ endpoint_name_radio = st.sidebar.selectbox(
     ),
     index=2
 )
+
+# mapping model to sm endpoint
+if st.button("map to endpoint"):
+    dict_endpoint[sm_endpoint_option] = endpoint_name_radio
+    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")
