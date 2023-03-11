@@ -51,11 +51,11 @@ dict_endpoint = {
 
 # SM EndPoints dropList
 sm_endpoint_opts=list_sm_endpoints()
-sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts,key="sm_endpoint_option")
+sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
 # refresh endpoint list
 if st.sidebar.button('refresh sm endpoints'):
     new_options = list_sm_endpoints()
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts,key="sm_endpoint_option")
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", new_options)
 
 
 # End Point names
