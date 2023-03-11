@@ -43,10 +43,24 @@ st.image('./ml_image.jpg')
 st.header("Few Shot Playground")
 endpoint_name='gpt-j-deploy-2023-01-21-20-01-49-923'
 length=50 # max length variation
+dict_endpoint = {
+    "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
+    "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
+    "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
+    "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
+    "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
+
+}
+
 
 # SM EndPoints dropList
 sm_endpoint_opts=list_sm_endpoints()
 sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts,key="sm_endpoint_option")
+# refresh endpoint list
+if st.sidebar.button('refresh sm endpoints'):
+    new_options = list_sm_endpoints()
+    sm_endpoint_option.options = new_options
+
 
 # End Point names
 endpoint_name_radio = st.sidebar.selectbox(
@@ -62,10 +76,11 @@ endpoint_name_radio = st.sidebar.selectbox(
     on_change=update_sm_endpoint_option
 )
 
-# refresh endpoint list
-if st.sidebar.button('refresh sm endpoints'):
-    new_options = list_sm_endpoints()
-    sm_endpoint_option.options = new_options
+# mapping model to sm endpoint
+if st.sidebar.button("Map to endpoint"):
+    dict_endpoint[sm_endpoint_option] = endpoint_name_radio.value
+    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
+
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")
@@ -103,15 +118,6 @@ seed_no = st.sidebar.slider("SEED for consistency", min_value=1, max_value=5, va
 #max_length = st.sidebar.text_input("Max length", value="50", max_chars=2)
 max_length = {'very short':10, 'short':20, 'medium':30, 'long':40, 'very long':50}
 
-
-dict_endpoint = {
-    "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
-    "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
-    "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
-    "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
-    "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
-
-}
 
 st.markdown("""
 
@@ -279,7 +285,3 @@ if st.button("Run"):
 #else:
 #    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
 
-# mapping model to sm endpoint
-if st.sidebar.button("Map to endpoint"):
-    dict_endpoint[sm_endpoint_option] = endpoint_name_radio
-    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
