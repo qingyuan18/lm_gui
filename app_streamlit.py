@@ -33,6 +33,10 @@ def handle_stable_diffusion(response):
     placeholder  = st.image(img_res)
     return prompt
 
+# if model selection changed , update the SM endpoint droplist checked value to mapped model
+def update_sm_endpoint_option(model_name_opt):
+    sm_endpoint_option.value=dict_endpoint[model_name_opt]
+
 st.image('./ml_image.jpg')
 
 
@@ -54,13 +58,14 @@ endpoint_name_radio = st.sidebar.selectbox(
         'STABLE-DIFFUSION',
         'BLOOM-1B7'
     ),
-    index=2
+    index=2,
+    on_change=update_sm_endpoint_option
 )
 
 # refresh endpoint list
 if st.sidebar.button('refresh sm endpoints'):
     new_options = list_sm_endpoints()
-    sm_endpoint_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options,key="sm_endpoint_option")
+    sm_endpoint_option.options = new_options
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")
@@ -264,16 +269,15 @@ if st.button("Run"):
     #print(generated_text)
     st.write(generated_text)
 
-# if model selection changed , update the SM endpoint droplist value to mapped model
 # model selection
-if 'model_selectbox_value' not in st.session_state:
-    st.session_state['model_selectbox_value'] = "default"
-
-if endpoint_name_radio != st.session_state.model_selectbox_value:
-    st.session_state.model_selectbox_value = endpoint_name_radio
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
-else:
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
+#if 'model_selectbox_value' not in st.session_state:
+#    st.session_state['model_selectbox_value'] = "default"
+#
+#if endpoint_name_radio != st.session_state.model_selectbox_value:
+#    st.session_state.model_selectbox_value = endpoint_name_radio
+#    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
+#else:
+#    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
 
 # mapping model to sm endpoint
 if st.sidebar.button("Map to endpoint"):
