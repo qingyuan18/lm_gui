@@ -40,12 +40,12 @@ st.header("Few Shot Playground")
 endpoint_name='gpt-j-deploy-2023-01-21-20-01-49-923'
 length=50 # max length variation
 
-# SM End Points dropList
+# model selection
+session_state = st.session_state
+session_state.model_selectbox_value = ""
+# SM EndPoints dropList
 sm_endpoint_opts=list_sm_endpoints()
 sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
-if st.sidebar.button('refresh sm endpoints'):
-    new_options = list_sm_endpoints()
-    selected_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options)
 
 # End Point names
 endpoint_name_radio = st.sidebar.selectbox(
@@ -60,8 +60,20 @@ endpoint_name_radio = st.sidebar.selectbox(
     index=2
 )
 
+# refresh endpoint list
+if st.sidebar.button('refresh sm endpoints'):
+    new_options = list_sm_endpoints()
+    sm_endpoint_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options)
+
+# if model selection changed , update the SM endpoint droplist value to mapped model
+if endpoint_name_radio != session_state.model_selectbox_value:
+    session_state.model_selectbox_value = endpoint_name_radio
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[session_state.model_selectbox_value])
+else:
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[session_state.model_selectbox_value])
+
 # mapping model to sm endpoint
-if st.button("map to endpoint"):
+if st.sidebar.button("Map to endpoint"):
     dict_endpoint[sm_endpoint_option] = endpoint_name_radio
     st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
