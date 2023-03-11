@@ -78,7 +78,7 @@ if st.sidebar.button("update endpoint"):
 
 # get current model's sm endpoint
 if st.sidebar.button("get endpoint info"):
-    st.info(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
+    st.sidebar.write(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")
