@@ -26,7 +26,7 @@ def generate_text(payload, endpoint_name_str):
         text = parse_gpt_neox_response(result)
     else:
         text = parse_gpt_response(result) # - result[0]['generated_text']
-    return text 
+    return text
 def handle_stable_diffusion(response):
     print(response)
     img_res = io.BytesIO(response['Body'].read())
@@ -40,9 +40,6 @@ st.header("Few Shot Playground")
 endpoint_name='gpt-j-deploy-2023-01-21-20-01-49-923'
 length=50 # max length variation
 
-# model selection
-session_state = st.session_state
-session_state.model_selectbox_value = ""
 # SM EndPoints dropList
 sm_endpoint_opts=list_sm_endpoints()
 sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
@@ -55,7 +52,7 @@ endpoint_name_radio = st.sidebar.selectbox(
         'ALEXA-20B',
         'GPT-NEOX-20B',
         'STABLE-DIFFUSION',
-        'BLOOM-176B'
+        'BLOOM-1B7'
     ),
     index=2
 )
@@ -66,11 +63,15 @@ if st.sidebar.button('refresh sm endpoints'):
     sm_endpoint_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options)
 
 # if model selection changed , update the SM endpoint droplist value to mapped model
-if endpoint_name_radio != session_state.model_selectbox_value:
-    session_state.model_selectbox_value = endpoint_name_radio
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[session_state.model_selectbox_value])
+# model selection
+if 'model_selectbox_value' not in st.session_state:
+    st.session_state['model_selectbox_value'] = "default"
+print(st.session_state)
+if endpoint_name_radio != st.session_state.model_selectbox_value:
+    st.session_state.model_selectbox_value = endpoint_name_radio
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value])
 else:
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[session_state.model_selectbox_value])
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value])
 
 # mapping model to sm endpoint
 if st.sidebar.button("Map to endpoint"):
@@ -103,11 +104,11 @@ rep_penalty = st.sidebar.slider("Repetition penalty", min_value=1, max_value=5, 
 
 # Repetition penalty control 'no_repeat_ngram_size',
 beams_no = st.sidebar.slider("Beams Search For Greedy search", min_value=0, max_value=5, value=1,
-                                help="Beams for optimization of search, positive integer")
+                             help="Beams for optimization of search, positive integer")
 
 # Repetition penalty control 'no_repeat_ngram_size',
 seed_no = st.sidebar.slider("SEED for consistency", min_value=1, max_value=5, value=1,
-                                help="Postive integer for consitent response, fix randomization")
+                            help="Postive integer for consitent response, fix randomization")
 
 #  Max length 'max_length'
 #max_length = st.sidebar.text_input("Max length", value="50", max_chars=2)
@@ -115,11 +116,11 @@ max_length = {'very short':10, 'short':20, 'medium':30, 'long':40, 'very long':5
 
 
 dict_endpoint = {
-    "GPT-J" : "gptj-ds-2023-02-11-02-56-05-104", #"gpt-j-deploy-2023-01-21-20-01-49-923",
-    "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-01-21-22-00-09-123",
-    "GPT-NEOX-20B" : "gpt-neox-djl20-ds-2023-02-18-05-44-59-361-endpoint",
-    "STABLE-DIFFUSION" : "stable-diffusion-2023-02-10-21-25-33-687",
-
+    "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
+    "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
+    "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
+    "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
+    "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
 
 }
 
@@ -193,18 +194,18 @@ def get_params_alexa(curr_length):
 def get_params_gptj(curr_length):
     print(do_sample_st,early_stopping)
     params = {
-              "return_full_text": True,
-              "temperature": temp,
-              #"min_length": len(prompt), #len(prompt) // 4 + length - 5,
-              "max_length": curr_length, #len(prompt) // 4 + length + 5,
-              'early_stopping': 'True' == early_stopping,
-              'num_beams': int(beams_no),
-              #'num_return_sequences' : int(beams_no) - 1,
-              'no_repeat_ngram_size': int(rep_penalty),
-              "do_sample": 'True' == do_sample_st , #True,
-              "repetition_penalty": float(rep_penalty),
-              #"top_k": 0, #20,
-              #"seed":int(seed_no)
+        "return_full_text": True,
+        "temperature": temp,
+        #"min_length": len(prompt), #len(prompt) // 4 + length - 5,
+        "max_length": curr_length, #len(prompt) // 4 + length + 5,
+        'early_stopping': 'True' == early_stopping,
+        'num_beams': int(beams_no),
+        #'num_return_sequences' : int(beams_no) - 1,
+        'no_repeat_ngram_size': int(rep_penalty),
+        "do_sample": 'True' == do_sample_st , #True,
+        "repetition_penalty": float(rep_penalty),
+        #"top_k": 0, #20,
+        #"seed":int(seed_no)
     }
     if temp == 0:
         print("GPT: No temperature so no Diversity or rare tokens in generation")
@@ -224,18 +225,18 @@ def get_params_gptj(curr_length):
 def get_params_gptneox(curr_length):
     #print(do_sample_st,early_stopping)
     params = {
-              #"return_full_text": True,
-              "temperature": temp,
-              #"min_length": len(prompt), # len(prompt) // 4 + length - 5,
-              "max_length": curr_length, #len(prompt) // 4 + length + 5,
-              'early_stopping': 'True' == early_stopping,
-              'num_beams': int(beams_no),
-              #'num_return_sequences' : int(beams_no) - 1,
-              'no_repeat_ngram_size': int(rep_penalty),
-              "do_sample": 'True' == do_sample_st, #True,
-              "repetition_penalty": float(rep_penalty),
-              "top_k": 0, #20,
-              #"seed":int(seed_no)
+        #"return_full_text": True,
+        "temperature": temp,
+        #"min_length": len(prompt), # len(prompt) // 4 + length - 5,
+        "max_length": curr_length, #len(prompt) // 4 + length + 5,
+        'early_stopping': 'True' == early_stopping,
+        'num_beams': int(beams_no),
+        #'num_return_sequences' : int(beams_no) - 1,
+        'no_repeat_ngram_size': int(rep_penalty),
+        "do_sample": 'True' == do_sample_st, #True,
+        "repetition_penalty": float(rep_penalty),
+        "top_k": 0, #20,
+        #"seed":int(seed_no)
     }
     #print(params)
     if temp == 0:
@@ -256,7 +257,7 @@ def get_params_gptneox(curr_length):
 def get_params_stable_diffusion(curr_length):
     #print(do_sample_st,early_stopping)
     params = {
-        "num_inference_steps": 50, 
+        "num_inference_steps": 50,
         "guidance_scale":7.5,
         "negative_prompt": "low quality poorly lit",
         "seed": "9080980"
