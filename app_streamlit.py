@@ -42,7 +42,7 @@ length=50 # max length variation
 
 # SM EndPoints dropList
 sm_endpoint_opts=list_sm_endpoints()
-sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
+sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts,key="sm_endpoint_option")
 
 # End Point names
 endpoint_name_radio = st.sidebar.selectbox(
@@ -60,23 +60,7 @@ endpoint_name_radio = st.sidebar.selectbox(
 # refresh endpoint list
 if st.sidebar.button('refresh sm endpoints'):
     new_options = list_sm_endpoints()
-    sm_endpoint_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options)
-
-# if model selection changed , update the SM endpoint droplist value to mapped model
-# model selection
-#if 'model_selectbox_value' not in st.session_state:
-#    st.session_state['model_selectbox_value'] = "default"
-
-#if endpoint_name_radio != st.session_state.model_selectbox_value:
-#    st.session_state.model_selectbox_value = endpoint_name_radio
-#    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value])
-#else:
-#    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value])
-
-# mapping model to sm endpoint
-if st.sidebar.button("Map to endpoint"):
-    dict_endpoint[sm_endpoint_option] = endpoint_name_radio
-    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
+    sm_endpoint_option = st.sidebar.selectbox('Endpoints in SageMaker', new_options,key="sm_endpoint_option")
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")
@@ -280,4 +264,18 @@ if st.button("Run"):
     #print(generated_text)
     st.write(generated_text)
 
+# if model selection changed , update the SM endpoint droplist value to mapped model
+# model selection
+if 'model_selectbox_value' not in st.session_state:
+    st.session_state['model_selectbox_value'] = "default"
 
+if endpoint_name_radio != st.session_state.model_selectbox_value:
+    st.session_state.model_selectbox_value = endpoint_name_radio
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
+else:
+    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts[st.session_state.model_selectbox_value],key="sm_endpoint_option")
+
+# mapping model to sm endpoint
+if st.sidebar.button("Map to endpoint"):
+    dict_endpoint[sm_endpoint_option] = endpoint_name_radio
+    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
