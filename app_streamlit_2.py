@@ -53,24 +53,23 @@ dict_endpoint = {
     "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
 
 }
-tab1 = st.sidebar.beta_expander("LLM Models")
-tab2 = st.sidebar.beta_expander("Stable Diffusion")
 
-#tabs = st.sidebar.beta_container()
+tab1, tab2 = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
+
+  #tabs = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 with tab1:
-    st.sidebar.markdown("LLM Models")
     # SM EndPoints dropList
     sm_endpoint_opts=list_sm_endpoints()
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
-    if st.sidebar.button('refresh sm endpoints'):
+    sm_endpoint_option = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
+    if st.button('refresh sm endpoints',key="refreshBtn_1"):
         new_options = list_sm_endpoints()
         sm_endpoint_opts=new_options
-        st.sidebar.info("SageMaker endpoints updated!")
+        st.info("SageMaker endpoints updated!")
         #sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", new_options)
 
 
     # End Point names
-    endpoint_name_radio = st.sidebar.selectbox(
+    endpoint_name_radio = st.selectbox(
         "Select the endpoint to run in SageMaker",
         (
             'GPT-J',
@@ -83,71 +82,70 @@ with tab1:
     )
 
     # mapping model to sm endpoint
-    if st.sidebar.button("update endpoint"):
+    if st.button("update endpoint",key="updateBtn_1"):
         dict_endpoint[sm_endpoint_option] = sm_endpoint_option
-        st.sidebar.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
+        st.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
     # get current model's sm endpoint
-    if st.sidebar.button("get endpoint info"):
-        st.sidebar.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
+    if st.button("get endpoint info",key="getBtn_1"):
+        st.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
 
     # Sidebar title
-    st.sidebar.title("LLM Model Parameters")
+    st.title("LLM Model Parameters")
 
 
     # Length control
-    length_choice = st.sidebar.select_slider("Length",
+    length_choice = st.select_slider("Length",
                                              options=['very short', 'short', 'medium', 'long', 'very long'],
                                              value='medium',
                                              help="Length of the model response")
 
     # early_stopping
-    early_stopping = st.sidebar.selectbox("Early Stopping",['True', 'False' ] )
+    early_stopping = st.selectbox("Early Stopping",['True', 'False' ] )
 
     # do_sample
-    do_sample_st = st.sidebar.selectbox("Sample Probabilities",['True', 'False' ] )
+    do_sample_st = st.selectbox("Sample Probabilities",['True', 'False' ] )
 
     # Temperature control
-    temp = st.sidebar.slider("Temperature", min_value=0.0, max_value=1.5, value=0.5,
+    temp = st.slider("Temperature", min_value=0.0, max_value=1.5, value=0.5,
                              help="The creativity of the model")
 
     # Repetition penalty control 'no_repeat_ngram_size',
-    rep_penalty = st.sidebar.slider("Repetition penalty", min_value=1, max_value=5, value=2,
+    rep_penalty = st.slider("Repetition penalty", min_value=1, max_value=5, value=2,
                                     help="Penalises the model for repition, positive integer greater than 1")
 
     # Repetition penalty control 'no_repeat_ngram_size',
-    beams_no = st.sidebar.slider("Beams Search For Greedy search", min_value=0, max_value=5, value=1,
+    beams_no = st.slider("Beams Search For Greedy search", min_value=0, max_value=5, value=1,
                                  help="Beams for optimization of search, positive integer")
 
     # Repetition penalty control 'no_repeat_ngram_size',
-    seed_no = st.sidebar.slider("SEED for consistency", min_value=1, max_value=5, value=1,
+    seed_no = st.slider("SEED for consistency", min_value=1, max_value=5, value=1,
                             help="Postive integer for consitent response, fix randomization")
-
 with tab2:
     # SM EndPoints dropList
-    st.sidebar.markdown("Stable Diffusion Model")
+    st.markdown("Stable Diffusion Model")
     sm_endpoint_opts_sd=list_sm_endpoints()
-    sm_endpoint_option_sd = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_opts_sd,key="sm_endpoint_option_sd")
+    sm_endpoint_option_sd = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts_sd,key="sm_endpoint_option_sd")
     # refresh endpoint list
-    if st.sidebar.button('refresh sm endpoints'):
+    if st.button('refresh sm endpoints',key="refreshBtn_2"):
         new_options = list_sm_endpoints()
         sm_endpoint_opts_sd=new_options
+        st.info("SageMaker endpoints updated!")
 
     # mapping model to sm endpoint
-    if st.sidebar.button("update endpoint"):
+    if st.button("update endpoint",key="updateBtn_2"):
         dict_endpoint["STABLE-DIFFUSION"] = sm_endpoint_option_sd
-        st.sidebar.success("stable diffusion model mapping to "+dict_endpoint["STABLE-DIFFUSION"])
+        st.success("stable diffusion model mapping to "+dict_endpoint["STABLE-DIFFUSION"])
 
         # Sidebar title
-    st.sidebar.title("Stable Diffusion Model Parameters")
-    num_inference_steps = st.sidebar.slider("num_inference_steps", min_value=20, max_value=50, value=25,
+    st.title("Stable Diffusion Model Parameters")
+    num_inference_steps = st.slider("num_inference_steps", min_value=20, max_value=50, value=25,
                              help="The steps of the stable diffustion model inference")
-    guidance_scale = st.sidebar.slider("guidance_scale", min_value=1.0, max_value=10, value=7.5,
+    guidance_scale = st.slider("guidance_scale", min_value=1.0, max_value=10.0, value=7.5,
                                        help="The guidance scale of the stable diffustion model")
-    negative_prompt = st.sidebar.text_input("negative_prompt",max_chars=500)
-    seed_input = st.sidebar.text_input("seed",max_chars=100)
-    if st.siderbar.button("random seed"):
-        seed_input=generate_random_number(seed_input)
+    negative_prompt = st.text_input("negative_prompt",max_chars=500)
+    seed_input = st.text_input("seed",value=generate_random_number(),max_chars=100)
+
 
 #  Max length 'max_length'
 #max_length = st.sidebar.text_input("Max length", value="50", max_chars=2)
