@@ -55,7 +55,8 @@ sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", sm_endpoint_
 # refresh endpoint list
 if st.sidebar.button('refresh sm endpoints'):
     new_options = list_sm_endpoints()
-    sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", new_options)
+    sm_endpoint_opts=new_options
+    #sm_endpoint_option = st.sidebar.selectbox("Endpoints in SageMaker", new_options)
 
 
 # End Point names
@@ -74,11 +75,11 @@ endpoint_name_radio = st.sidebar.selectbox(
 # mapping model to sm endpoint
 if st.sidebar.button("update endpoint"):
     dict_endpoint[sm_endpoint_option] = endpoint_name_radio
-    st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
+    st.sidebar.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
 # get current model's sm endpoint
 if st.sidebar.button("get endpoint info"):
-    st.sidebar.write(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
+    st.sidebar.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
 
 # Sidebar title
 st.sidebar.title("LLM Model Parameters")

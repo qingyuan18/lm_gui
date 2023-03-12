@@ -9,9 +9,9 @@ sagemaker_runtime = boto3.client('runtime.sagemaker')
 
 
 
-def generate_random_number(text_input):
+def generate_random_number():
     random_number = random.randint(1, 1000000)
-    text_input.text(str(random_number))
+    return (str(random_number))
 
 def generate_text(payload, endpoint_name_str):
     #- payload = {"inputs": prompt, "parameters": params}
@@ -81,11 +81,11 @@ with tabs:
     # mapping model to sm endpoint
     if st.sidebar.button("update endpoint"):
         dict_endpoint[sm_endpoint_option] = sm_endpoint_option
-        st.info(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
+        st.sidebar.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
     # get current model's sm endpoint
     if st.sidebar.button("get endpoint info"):
-        st.sidebar.write(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
+        st.sidebar.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
 
     # Sidebar title
     st.sidebar.title("LLM Model Parameters")
@@ -132,7 +132,7 @@ with tabs:
     # mapping model to sm endpoint
     if st.sidebar.button("update endpoint"):
         dict_endpoint["STABLE-DIFFUSION"] = sm_endpoint_option_sd
-        st.info("stable diffusion model mapping to "+sm_endpoint_option_sd)
+        st.sidebar.success("stable diffusion model mapping to "+sm_endpoint_option_sd)
 
         # Sidebar title
     st.sidebar.title("Stable Diffusion Model Parameters")
@@ -143,7 +143,7 @@ with tabs:
     negative_prompt = st.sidebar.text_input("negative_prompt",max_chars=500)
     seed_input = st.sidebar.text_input("seed",max_chars=100)
     if st.siderbar.button("random seed"):
-        generate_random_number(seed_input)
+        text_input=generate_random_number(seed_input)
 
 #  Max length 'max_length'
 #max_length = st.sidebar.text_input("Max length", value="50", max_chars=2)
