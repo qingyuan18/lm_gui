@@ -53,8 +53,11 @@ dict_endpoint = {
     "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
 
 }
-tabs = st.sidebar.beta_container()
-with tabs:
+tab1 = st.sidebar.beta_expander("LLM Models")
+tab2 = st.sidebar.beta_expander("Stable Diffusion")
+
+#tabs = st.sidebar.beta_container()
+with tab1:
     st.sidebar.markdown("LLM Models")
     # SM EndPoints dropList
     sm_endpoint_opts=list_sm_endpoints()
@@ -73,7 +76,7 @@ with tabs:
             'GPT-J',
             'ALEXA-20B',
             'GPT-NEOX-20B',
-            'STABLE-DIFFUSION',
+            #'STABLE-DIFFUSION',
             'BLOOM-1B7'
         ),
         index=2
@@ -120,7 +123,7 @@ with tabs:
     seed_no = st.sidebar.slider("SEED for consistency", min_value=1, max_value=5, value=1,
                             help="Postive integer for consitent response, fix randomization")
 
-with tabs:
+with tab2:
     # SM EndPoints dropList
     st.sidebar.markdown("Stable Diffusion Model")
     sm_endpoint_opts_sd=list_sm_endpoints()
@@ -128,12 +131,12 @@ with tabs:
     # refresh endpoint list
     if st.sidebar.button('refresh sm endpoints'):
         new_options = list_sm_endpoints()
-        sm_endpoint_option_sd = st.sidebar.selectbox("Endpoints in SageMaker", new_options,key="sm_endpoint_option_sd")
+        sm_endpoint_opts_sd=new_options
 
     # mapping model to sm endpoint
     if st.sidebar.button("update endpoint"):
         dict_endpoint["STABLE-DIFFUSION"] = sm_endpoint_option_sd
-        st.sidebar.success("stable diffusion model mapping to "+sm_endpoint_option_sd)
+        st.sidebar.success("stable diffusion model mapping to "+dict_endpoint["STABLE-DIFFUSION"])
 
         # Sidebar title
     st.sidebar.title("Stable Diffusion Model Parameters")
@@ -144,7 +147,7 @@ with tabs:
     negative_prompt = st.sidebar.text_input("negative_prompt",max_chars=500)
     seed_input = st.sidebar.text_input("seed",max_chars=100)
     if st.siderbar.button("random seed"):
-        text_input=generate_random_number(seed_input)
+        seed_input=generate_random_number(seed_input)
 
 #  Max length 'max_length'
 #max_length = st.sidebar.text_input("Max length", value="50", max_chars=2)
