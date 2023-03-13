@@ -83,12 +83,12 @@ with tab1:
 
     # mapping model to sm endpoint
     if st.button("update endpoint",key="updateBtn_1"):
-        dict_endpoint[sm_endpoint_option] = sm_endpoint_option
+        dict_endpoint[endpoint_name_radio] = sm_endpoint_option
         st.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
     # get current model's sm endpoint
     if st.button("get endpoint info",key="getBtn_1"):
-        st.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+sm_endpoint_option)
+        st.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+dict_endpoint[endpoint_name_radio])
 
     # Sidebar title
     st.title("LLM Model Parameters")
