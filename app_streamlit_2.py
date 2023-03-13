@@ -4,7 +4,6 @@ import json
 import io
 from util import *
 import random
-import SessionState
 
 if 'dict_endpoint' not in st.session_state:
     st.session_state['dict_endpoint'] = {
