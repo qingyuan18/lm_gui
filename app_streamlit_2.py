@@ -65,7 +65,7 @@ tab1, tab2 = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 
   #tabs = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 with tab1:
-    st.success("you pressed tab1")
+    print("you pressed tab1")
     # SM EndPoints dropList
     sm_endpoint_opts=list_sm_endpoints()
     sm_endpoint_option = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
@@ -131,7 +131,7 @@ with tab1:
                             help="Postive integer for consitent response, fix randomization")
 with tab2:
     # SM EndPoints dropList
-    st.success("you pressed tab2")
+    print("you pressed tab2")
     st.markdown("Stable Diffusion Model")
     sm_endpoint_opts_sd=list_sm_endpoints()
     sm_endpoint_option_sd = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts_sd,key="sm_endpoint_option_sd")
