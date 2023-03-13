@@ -27,6 +27,16 @@ def generate_random_number():
     random_number = random.randint(1, 1000000)
     return (str(random_number))
 
+def generate_img(payload,endpoint_name_str):
+    #- payload = {"inputs": prompt, "parameters": params}
+    encoded_inp = json.dumps(payload).encode("utf-8")
+    response = sagemaker_runtime.invoke_endpoint(
+        EndpointName=endpoint_name_str,
+        ContentType='application/json',
+        Body=encoded_inp
+    )
+    return handle_stable_diffusion(response)
+
 def generate_text(payload, endpoint_name_str):
     #- payload = {"inputs": prompt, "parameters": params}
     encoded_inp = json.dumps(payload).encode("utf-8")
@@ -35,9 +45,6 @@ def generate_text(payload, endpoint_name_str):
         ContentType='application/json',
         Body=encoded_inp
     )
-    if endpoint_name_radio == 'STABLE-DIFFUSION':
-        return handle_stable_diffusion(response)
-
     result = json.loads(response['Body'].read().decode()) # -
     print(result)
     if endpoint_name_radio == 'ALEXA-20B':
@@ -47,9 +54,11 @@ def generate_text(payload, endpoint_name_str):
     else:
         text = parse_gpt_response(result) # - result[0]['generated_text']
     return text
+
 def handle_stable_diffusion(response):
     print(response)
-    img_res = io.BytesIO(response['Body'].read())
+    img_res = io.BytesIO(response['Body']['generated_images'].read())
+    #img_res = io.BytesIO(response['generated_images'].read())
     placeholder  = st.image(img_res)
     return prompt
 
@@ -293,15 +302,16 @@ def get_params_gptneox(curr_length):
 
 def get_params_stable_diffusion(curr_length):
     #print(do_sample_st,early_stopping)
-    params = {
+    payload = {
+        "prompt":prompt,
         "num_inference_steps": num_inference_steps,
         "guidance_scale":guidance_scale,
         "negative_prompt": negative_prompt,
-        "seed": int(seed_input.value)
+        "seed": int(seed_input)
     }
 
-    payload = {"prompt": f"""{prompt}""",  "parameters": params}
-    print("STABLE-DIFFUSION::", endpoint_name_radio, payload,curr_length)
+    #payload = {"prompt": f"""{prompt}""",  "parameters": params}
+    print("STABLE-DIFFUSION::", payload,curr_length)
 
     return payload
 
@@ -321,9 +331,8 @@ if st.button("Run Stable Diffusion"):
     placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
-    payload = get_params(curr_length,endpoint_name_radio)
+    payload = get_params_stable_diffusion(curr_length)
     endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
-
-    generated_text = generate_text(payload,endpoint_name_s)
+    generated_text = generate_img(payload,endpoint_name_s)
     #print(generated_text)
     st.write(generated_text)
