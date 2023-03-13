@@ -306,19 +306,24 @@ def get_params_stable_diffusion(curr_length):
     return payload
 
 
-if st.button("Run"):
+if st.button("Run LLM"):
     placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
     payload = get_params(curr_length,endpoint_name_radio)
-    if tab1:
-       endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
-    elif tab2:
-       endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
-
+    endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
     generated_text = generate_text(payload,endpoint_name_s)
     #print(generated_text)
     st.write(generated_text)
 
 
+if st.button("Run Stable Diffusion"):
+    placeholder = st.empty()
+    curr_length = max_length.get(length_choice, 10)
+    curr_length = curr_length * 5 # for scaling
+    payload = get_params(curr_length,endpoint_name_radio)
+    endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
 
+    generated_text = generate_text(payload,endpoint_name_s)
+    #print(generated_text)
+    st.write(generated_text)
