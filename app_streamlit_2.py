@@ -309,7 +309,10 @@ if st.button("Run"):
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
     payload = get_params(curr_length,endpoint_name_radio)
-    endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
+    if tab1:
+       endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
+    if tab2:
+       endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
 
     generated_text = generate_text(payload,endpoint_name_s)
     #print(generated_text)
