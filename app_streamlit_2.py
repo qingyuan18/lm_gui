@@ -65,6 +65,7 @@ tab1, tab2 = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 
   #tabs = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 with tab1:
+    st.success("you pressed tab1")
     # SM EndPoints dropList
     sm_endpoint_opts=list_sm_endpoints()
     sm_endpoint_option = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
@@ -130,6 +131,7 @@ with tab1:
                             help="Postive integer for consitent response, fix randomization")
 with tab2:
     # SM EndPoints dropList
+    st.success("you pressed tab2")
     st.markdown("Stable Diffusion Model")
     sm_endpoint_opts_sd=list_sm_endpoints()
     sm_endpoint_option_sd = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts_sd,key="sm_endpoint_option_sd")
@@ -311,7 +313,7 @@ if st.button("Run"):
     payload = get_params(curr_length,endpoint_name_radio)
     if tab1:
        endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
-    if tab2:
+    elif tab2:
        endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
 
     generated_text = generate_text(payload,endpoint_name_s)
