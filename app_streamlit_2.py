@@ -4,6 +4,21 @@ import json
 import io
 from util import *
 import random
+import SessionState
+
+if 'dict_endpoint' not in st.session_state:
+    st.session_state['dict_endpoint'] = {
+        "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
+        "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
+        "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
+        "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
+        "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
+
+    }
+
+
+
+
 
 sagemaker_runtime = boto3.client('runtime.sagemaker')
 
@@ -45,14 +60,7 @@ st.image('./ml_image.jpg')
 st.header("Few Shot Playground")
 endpoint_name='gpt-j-deploy-2023-01-21-20-01-49-923'
 length=50 # max length variation
-dict_endpoint = {
-    "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
-    "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
-    "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
-    "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
-    "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
 
-}
 
 tab1, tab2 = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 
@@ -76,19 +84,19 @@ with tab1:
             'ALEXA-20B',
             'GPT-NEOX-20B',
             #'STABLE-DIFFUSION',
-            'BLOOM-1B7'
+            'BLOOM-1b7'
         ),
         index=2
     )
 
     # mapping model to sm endpoint
     if st.button("update endpoint",key="updateBtn_1"):
-        dict_endpoint[endpoint_name_radio] = sm_endpoint_option
+        st.session_state['dict_endpoint'][endpoint_name_radio] = sm_endpoint_option
         st.success(endpoint_name_radio+" model mapping to "+sm_endpoint_option)
 
     # get current model's sm endpoint
     if st.button("get endpoint info",key="getBtn_1"):
-        st.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+dict_endpoint[endpoint_name_radio])
+        st.success(endpoint_name_radio+" model 's  SageMaker endpoint is: "+st.session_state['dict_endpoint'][endpoint_name_radio])
 
     # Sidebar title
     st.title("LLM Model Parameters")
@@ -134,8 +142,8 @@ with tab2:
 
     # mapping model to sm endpoint
     if st.button("update endpoint",key="updateBtn_2"):
-        dict_endpoint["STABLE-DIFFUSION"] = sm_endpoint_option_sd
-        st.success("stable diffusion model mapping to "+dict_endpoint["STABLE-DIFFUSION"])
+        st.session_state['dict_endpoint']["STABLE-DIFFUSION"] = sm_endpoint_option_sd
+        st.success("stable diffusion model mapping to "+st.session_state['dict_endpoint']["STABLE-DIFFUSION"])
 
         # Sidebar title
     st.title("Stable Diffusion Model Parameters")

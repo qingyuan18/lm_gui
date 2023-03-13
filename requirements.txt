@@ -1,10 +1,9 @@
 --extra-index-url https://download.pytorch.org/whl/cu113
 torch
 diffusers
-#transformers
 git+https://github.com/huggingface/transformers
 accelerate
 ftfy
-transformers
+#transformers
 gradio
 streamlit
