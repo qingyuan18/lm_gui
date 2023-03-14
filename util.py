@@ -1,10 +1,9 @@
 import boto3
 
-# 创建 SageMaker 客户端
 sm_client = boto3.client('sagemaker')
 
 
-def list_sm_endpoints():# 获取当前 AWS 账户下的所有 SageMaker 端点
+def list_sm_endpoints():
     endpoint_list=[]
     endpoints = sm_client.list_endpoints()
     for endpoint in endpoints['Endpoints']:
@@ -14,6 +13,10 @@ def list_sm_endpoints():# 获取当前 AWS 账户下的所有 SageMaker 端点
         #print(f"Endpoint Name: {endpoint_name}, Status: {endpoint_status}")
     return endpoint_list
 
-
+def get_bucket_and_key(s3uri):
+    pos = s3uri.find('/', 5)
+    bucket = s3uri[5 : pos]
+    key = s3uri[pos + 1 : ]
+    return bucket, key
 
 

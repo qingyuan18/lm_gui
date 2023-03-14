@@ -6,6 +6,7 @@ from util import *
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 
 if 'dict_endpoint' not in st.session_state:
     st.session_state['dict_endpoint'] = {
@@ -22,7 +23,7 @@ if 'dict_endpoint' not in st.session_state:
 
 
 sagemaker_runtime = boto3.client('runtime.sagemaker')
-
+s3_resource = boto3.resource('s3')
 
 
 def generate_random_number():
@@ -34,7 +35,7 @@ def generate_img(payload,endpoint_name_str):
     encoded_inp = json.dumps(payload).encode("utf-8")
     response = sagemaker_runtime.invoke_endpoint(
         EndpointName=endpoint_name_str,
-        ContentType='application/x-text',
+        ContentType='application/json',
         Body=encoded_inp
     )
     return handle_stable_diffusion(response)
@@ -61,10 +62,28 @@ def generate_text(payload, endpoint_name_str):
 
 def handle_stable_diffusion(response):
     print(response)
-    img_res = io.BytesIO(response['Body'].read())
-    fig, ax = plt.subplots()
-    ax.imshow(np.array(img_res))
-    st.pyplot(fig)
+    result = json.loads(response['Body'].read().decode())
+    print(result)
+    try:
+        predictions = result['result']
+        print(predictions)
+        for prediction in predictions:
+            bucket, key = get_bucket_and_key(prediction)
+            obj = s3_resource.Object(bucket, key)
+            bytes = obj.get()['Body'].read()
+            image = Image.open(io.BytesIO(bytes))
+            image_array = np.array(image)
+            st.image(image_array)
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
+
+
+    #img_res = io.BytesIO(response['Body'].read())
+    #fig, ax = plt.subplots()
+    #ax.imshow(np.array(img_res))
+    #st.pyplot(fig)
+
     #img_res = io.BytesIO(response['generated_images'].read())
     #placeholder  = st.image(img_res)
     #placeholder.image(img_res)
@@ -336,11 +355,19 @@ def get_params_gptneox(curr_length):
 
 def get_params_stable_diffusion(curr_length):
     #print(do_sample_st,early_stopping)
+    #payload = {
+    #    "prompt":prompt,
+    #    "num_inference_steps": num_inference_steps,
+    #    "guidance_scale":guidance_scale,
+    #    "negative_prompt": negative_prompt,
+    #    "seed": int(seed_input)
+    #}
     payload = {
         "prompt":prompt,
-        "num_inference_steps": num_inference_steps,
-        "guidance_scale":guidance_scale,
+        "steps": num_inference_steps,
+        "sampler":"euler_a",
         "negative_prompt": negative_prompt,
+        "count":1
         "seed": int(seed_input)
     }
 
