@@ -32,7 +32,7 @@ def generate_img(payload,endpoint_name_str):
     encoded_inp = json.dumps(payload).encode("utf-8")
     response = sagemaker_runtime.invoke_endpoint(
         EndpointName=endpoint_name_str,
-        ContentType='application/json',
+        ContentType='application/x-text',
         Body=encoded_inp
     )
     return handle_stable_diffusion(response)
@@ -51,8 +51,10 @@ def generate_text(payload, endpoint_name_str):
         text = parse_alexa_response(result)
     elif endpoint_name_radio == 'GPT-NEOX-20B':
         text = parse_gpt_neox_response(result)
-    else:
+    elif endpoint_name_radio == 'GPT-J':
         text = parse_gpt_response(result) # - result[0]['generated_text']
+    else :
+        text = parse_bloom_response(result)
     return text
 
 def handle_stable_diffusion(response):
@@ -60,6 +62,7 @@ def handle_stable_diffusion(response):
     img_res = io.BytesIO(response['Body']['generated_images'].read())
     #img_res = io.BytesIO(response['generated_images'].read())
     placeholder  = st.image(img_res)
+    placeholder.image(img_res)
     return prompt
 
 st.image('./ml_image.jpg')
@@ -140,7 +143,6 @@ with tab1:
                             help="Postive integer for consitent response, fix randomization")
 with tab2:
     # SM EndPoints dropList
-    print("you pressed tab2")
     st.markdown("Stable Diffusion Model")
     sm_endpoint_opts_sd=list_sm_endpoints()
     sm_endpoint_option_sd = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts_sd,key="sm_endpoint_option_sd")
@@ -195,6 +197,10 @@ def parse_alexa_response(query_response):
 def parse_gpt_response(query_response):
     return query_response[0][0]['generated_text']
 
+def parse_bloom_response(query_response):
+    return query_response['generated_texts']
+
+
 def parse_gpt_neox_response(query_response):
     return query_response['outputs'][0]
 
@@ -205,8 +211,10 @@ def get_params(curr_length, endpoint_name_radio):
         return get_params_gptneox(curr_length)
     elif endpoint_name_radio == 'STABLE-DIFFUSION':
         return get_params_stable_diffusion(curr_length)
-    else:
+    elif endpoint_name_radio == 'GPT-j':
         return get_params_gptj(curr_length)
+    else:
+        return get_params_bloom(curr_length)
 
 def get_params_alexa(curr_length):
     params = {
@@ -268,6 +276,27 @@ def get_params_gptj(curr_length):
 
     return payload
 
+def get_params_bloom(curr_length):
+    print(do_sample_st,early_stopping)
+    payload = {
+        "text_inputs": prompt,
+        #"return_full_text": True,
+        "temperature": temp,
+        #"min_length": len(prompt), #len(prompt) // 4 + length - 5,
+        "max_length": curr_length, #len(prompt) // 4 + length + 5,
+        'early_stopping': 'True' == early_stopping,
+        'num_beams': int(beams_no),
+        'num_return_sequences' : int(beams_no),
+        'no_repeat_ngram_size': int(rep_penalty),
+        "do_sample": 'True' == do_sample_st , #True,
+        "seed":int(seed_no)
+    }
+    print("BLOOM::", endpoint_name_radio, payload,curr_length)
+
+    return payload
+
+
+
 def get_params_gptneox(curr_length):
     #print(do_sample_st,early_stopping)
     params = {
@@ -317,22 +346,24 @@ def get_params_stable_diffusion(curr_length):
 
 
 if st.button("Run LLM"):
-    placeholder = st.empty()
+    #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
     payload = get_params(curr_length,endpoint_name_radio)
     endpoint_name_s = st.session_state['dict_endpoint'].get(endpoint_name_radio, "gptj-ds-2023-02-11-02-56-05-104")
     generated_text = generate_text(payload,endpoint_name_s)
     #print(generated_text)
-    st.write(generated_text)
+    #st.write(generated_text)
+    placeholder.write(generated_text)
 
 
 if st.button("Run Stable Diffusion"):
-    placeholder = st.empty()
+    #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
     payload = get_params_stable_diffusion(curr_length)
     endpoint_name_s = st.session_state['dict_endpoint']["STABLE-DIFFUSION"]
     generated_text = generate_img(payload,endpoint_name_s)
     #print(generated_text)
-    st.write(generated_text)
+    #st.write(generated_text)
+    placeholder.write(generated_text)
