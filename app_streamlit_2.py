@@ -235,7 +235,7 @@ def get_params(curr_length, endpoint_name_radio):
         return get_params_gptneox(curr_length)
     elif endpoint_name_radio == 'STABLE-DIFFUSION':
         return get_params_stable_diffusion(curr_length)
-    elif endpoint_name_radio == 'GPT-j':
+    elif endpoint_name_radio == 'GPT-J':
         return get_params_gptj(curr_length)
     else:
         return get_params_bloom(curr_length)
@@ -367,7 +367,7 @@ def get_params_stable_diffusion(curr_length):
         "steps": num_inference_steps,
         "sampler":"euler_a",
         "negative_prompt": negative_prompt,
-        "count":1
+        "count":1,
         "seed": int(seed_input)
     }
 
