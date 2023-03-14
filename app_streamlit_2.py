@@ -4,6 +4,8 @@ import json
 import io
 from util import *
 import random
+import matplotlib.pyplot as plt
+import numpy as np
 
 if 'dict_endpoint' not in st.session_state:
     st.session_state['dict_endpoint'] = {
@@ -59,10 +61,13 @@ def generate_text(payload, endpoint_name_str):
 
 def handle_stable_diffusion(response):
     print(response)
-    img_res = io.BytesIO(response['Body']['generated_images'].read())
+    img_res = io.BytesIO(response['Body'].read())
+    fig, ax = plt.subplots()
+    ax.imshow(np.array(img_res))
+    st.pyplot(fig)
     #img_res = io.BytesIO(response['generated_images'].read())
-    placeholder  = st.image(img_res)
-    placeholder.image(img_res)
+    #placeholder  = st.image(img_res)
+    #placeholder.image(img_res)
     return prompt
 
 st.image('./ml_image.jpg')

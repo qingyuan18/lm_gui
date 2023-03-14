@@ -7,3 +7,4 @@ ftfy
 #transformers
 gradio
 streamlit
+matplotlib
