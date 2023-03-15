@@ -114,7 +114,7 @@ with tab1:
 
     # End Point names
     endpoint_name_radio = st.selectbox(
-        "Select the endpoint to run in SageMaker",
+        "Select the model to run in SageMaker",
         (
             'GPT-J',
             'ALEXA-20B',
