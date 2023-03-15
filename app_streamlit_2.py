@@ -18,7 +18,8 @@ if 'dict_endpoint' not in st.session_state:
 
     }
 
-
+if 'random_seed' not in st.session_state:
+    st.session_state['random_seed']="0"
 
 
 
@@ -101,7 +102,6 @@ tab1, tab2 = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 
   #tabs = st.sidebar.tabs(["LLM Models", "Stable Diffusion"])
 with tab1:
-    print("you pressed tab1")
     # SM EndPoints dropList
     sm_endpoint_opts=list_sm_endpoints()
     sm_endpoint_option = st.selectbox("Endpoints in SageMaker", sm_endpoint_opts)
@@ -185,10 +185,15 @@ with tab2:
     st.title("Stable Diffusion Model Parameters")
     num_inference_steps = st.slider("num_inference_steps", min_value=20, max_value=50, value=25,
                              help="The steps of the stable diffustion model inference")
-    guidance_scale = st.slider("guidance_scale", min_value=1.0, max_value=10.0, value=7.5,
-                                       help="The guidance scale of the stable diffustion model")
+    #guidance_scale = st.slider("guidance_scale", min_value=1.0, max_value=10.0, value=7.5,
+    #                                   help="The guidance scale of the stable diffustion model")
     negative_prompt = st.text_input("negative_prompt",max_chars=500)
-    seed_input = st.text_input("seed",value=generate_random_number(),max_chars=100)
+    seed_container = st.empty()
+    seed_input=seed_container.text_input("seed",max_chars=100,value=st.session_state['random_seed'])
+    if st.button("random seed"):
+        st.session_state['random_seed']=str(generate_random_number())
+        seed_container.empty()
+        seed_container.text_input("seed",max_chars=100,value=st.session_state['random_seed'])
 
 
 #  Max length 'max_length'
@@ -362,6 +367,7 @@ def get_params_stable_diffusion(curr_length):
     #    "negative_prompt": negative_prompt,
     #    "seed": int(seed_input)
     #}
+    print("here1====",st.session_state['random_seed'])
     payload = {
         "prompt":prompt,
         "steps": num_inference_steps,
@@ -369,6 +375,7 @@ def get_params_stable_diffusion(curr_length):
         "negative_prompt": negative_prompt,
         "count":1,
         "seed": int(seed_input)
+        #'seed': int(st.session_state['random_seed'])
     }
 
     #payload = {"prompt": f"""{prompt}""",  "parameters": params}
