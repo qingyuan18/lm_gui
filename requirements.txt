@@ -8,3 +8,4 @@ ftfy
 gradio
 streamlit
 matplotlib
+boto3
