@@ -37,6 +37,7 @@ def generate_img(payload,endpoint_name_str):
     response = sagemaker_runtime.invoke_endpoint(
         EndpointName=endpoint_name_str,
         ContentType='application/json',
+        #Accept='application/json;jpeg',
         Body=encoded_inp
     )
     return handle_stable_diffusion(response)
@@ -62,33 +63,40 @@ def generate_text(payload, endpoint_name_str):
     return text
 
 def handle_stable_diffusion(response):
-    print(response)
-    result = json.loads(response['Body'].read().decode())
-    print(result)
-    try:
-        predictions = result['result']
-        print(predictions)
-        for prediction in predictions:
-            bucket, key = get_bucket_and_key(prediction)
-            obj = s3_resource.Object(bucket, key)
-            bytes = obj.get()['Body'].read()
-            image = Image.open(io.BytesIO(bytes))
-            image_array = np.array(image)
-            st.image(image_array)
-    except Exception as e:
-        traceback.print_exc()
-        print(e)
+    #print(response)
+    #result = json.loads(response['Body'].read().decode())
+    #print(result)
+    #try:
+    #    predictions = result['result']
+    #    print(predictions)
+    #    for prediction in predictions:
+    #        bucket, key = get_bucket_and_key(prediction)
+    #        obj = s3_resource.Object(bucket, key)
+    #        bytes = obj.get()['Body'].read()
+    #        image = Image.open(io.BytesIO(bytes))
+    #        image_array = np.array(image)
+    #        st.image(image_array)
+    #except Exception as e:
+    #    traceback.print_exc()
+    #    print(e)
+
+    import codecs
+    import base64
+    from io import BytesIO
+    response_dict=json.load(codecs.getreader('utf-8')(response['Body']))
+    #print("return images==",str(len(response_dict['generated_images'])))
+    img=response_dict['generated_images'][0]
 
 
-    #img_res = io.BytesIO(response['Body'].read())
-    #fig, ax = plt.subplots()
-    #ax.imshow(np.array(img_res))
-    #st.pyplot(fig)
+    plt.figure(figsize=(128, 128))
+    plt.imshow(np.array(img))
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png")
+    st.image(buffer.getvalue(), caption="Amazon SageMaker", use_column_width=True)
 
-    #img_res = io.BytesIO(response['generated_images'].read())
-    #placeholder  = st.image(img_res)
-    #placeholder.image(img_res)
     return prompt
+
+
 
 st.image('./ml_image.jpg')
 
@@ -359,24 +367,25 @@ def get_params_gptneox(curr_length):
     return payload
 
 def get_params_stable_diffusion(curr_length):
-    #print(do_sample_st,early_stopping)
-    #payload = {
-    #    "prompt":prompt,
-    #    "num_inference_steps": num_inference_steps,
-    #    "guidance_scale":guidance_scale,
-    #    "negative_prompt": negative_prompt,
-    #    "seed": int(seed_input)
-    #}
-    print("here1====",st.session_state['random_seed'])
+    print(do_sample_st,early_stopping)
     payload = {
         "prompt":prompt,
-        "steps": num_inference_steps,
-        "sampler":"euler_a",
+        "num_inference_steps": num_inference_steps,
+        "guidance_scale":7.5,
         "negative_prompt": negative_prompt,
-        "count":1,
-        "seed": int(seed_input)
-        #'seed': int(st.session_state['random_seed'])
+        "num_images_per_prompt": 1,
+        "seed": int(st.session_state['random_seed'])
     }
+    #print("here1====",st.session_state['random_seed'])
+    #payload = {
+    #    "prompt":prompt,
+    #    "steps": num_inference_steps,
+    #    "sampler":"euler_a",
+    #    "negative_prompt": negative_prompt,
+    #    "count":1,
+    #    "seed": int(seed_input)
+    #    #'seed': int(st.session_state['random_seed'])
+    #}
 
     #payload = {"prompt": f"""{prompt}""",  "parameters": params}
     print("STABLE-DIFFUSION::", payload,curr_length)
