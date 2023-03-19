@@ -82,8 +82,6 @@ def handle_stable_diffusion(response):
 
     import codecs
     Image.MAX_IMAGE_PIXELS = None
-    import base64
-    from io import BytesIO
     response_dict=json.load(codecs.getreader('utf-8')(response['Body']))
     #print("return images==",str(len(response_dict['generated_images'])))
     img=response_dict['generated_images'][0]
@@ -98,7 +96,7 @@ def handle_stable_diffusion(response):
     plt.imshow(np.array(img))
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png")
-    st.image(buffer.getvalue(), caption="Amazon SageMaker", use_column_width=True)
+    st.image(buffer.getvalue(), caption="Amazon SageMaker")
 
     return prompt
 
@@ -398,9 +396,9 @@ def get_params_stable_diffusion(curr_length):
 
     return payload
 
-col1,col2 = st.columns(2,gap="large")
-with col1:
-  if st.button("Run LLM"):
+#col1,col2 = st.columns(2,gap="large")
+#with col1:
+if st.button("Run LLM"):
     #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
@@ -411,8 +409,8 @@ with col1:
     #st.write(generated_text)
     placeholder.write(generated_text)
 
-with col2:
-  if st.button("Run Stable Diffusion"):
+#with col2:
+if st.button("Run Stable Diffusion"):
     #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
