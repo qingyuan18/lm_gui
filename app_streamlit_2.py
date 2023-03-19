@@ -37,7 +37,7 @@ def generate_img(payload,endpoint_name_str):
     response = sagemaker_runtime.invoke_endpoint(
         EndpointName=endpoint_name_str,
         ContentType='application/json',
-        #Accept='application/json;jpeg',
+        Accept='application/json',
         Body=encoded_inp
     )
     return handle_stable_diffusion(response)
@@ -88,7 +88,12 @@ def handle_stable_diffusion(response):
     #print("return images==",str(len(response_dict['generated_images'])))
     img=response_dict['generated_images'][0]
 
+    #### accept jpeg #######
+    #plt.figure(figsize=(256, 256))
+    #plt.imshow(img)
+    #st.pyplot()
 
+    #### accept json ##########
     plt.figure(figsize=(256, 256))
     plt.imshow(np.array(img))
     buffer = io.BytesIO()
@@ -393,8 +398,9 @@ def get_params_stable_diffusion(curr_length):
 
     return payload
 
-
-if st.button("Run LLM"):
+col1,col2 = st.columns(2,gap="large")
+with col1:
+  if st.button("Run LLM"):
     #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
@@ -405,8 +411,8 @@ if st.button("Run LLM"):
     #st.write(generated_text)
     placeholder.write(generated_text)
 
-
-if st.button("Run Stable Diffusion"):
+with col2:
+  if st.button("Run Stable Diffusion"):
     #placeholder = st.empty()
     curr_length = max_length.get(length_choice, 10)
     curr_length = curr_length * 5 # for scaling
