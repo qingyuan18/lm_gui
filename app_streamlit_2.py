@@ -81,6 +81,7 @@ def handle_stable_diffusion(response):
     #    print(e)
 
     import codecs
+    Image.MAX_IMAGE_PIXELS = None
     import base64
     from io import BytesIO
     response_dict=json.load(codecs.getreader('utf-8')(response['Body']))
@@ -88,7 +89,7 @@ def handle_stable_diffusion(response):
     img=response_dict['generated_images'][0]
 
 
-    plt.figure(figsize=(128, 128))
+    plt.figure(figsize=(256, 256))
     plt.imshow(np.array(img))
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png")
