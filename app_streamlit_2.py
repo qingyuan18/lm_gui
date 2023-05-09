@@ -10,9 +10,9 @@ from PIL import Image
 
 if 'dict_endpoint' not in st.session_state:
     st.session_state['dict_endpoint'] = {
-        "GPT-J" : "jumpstart-dft-hf-textgeneration-gpt2", #"gpt-j-deploy-2023-01-21-20-01-49-923",
-        "ALEXA-20B" : "jumpstart-example-infer-pytorch-textgen-2023-03-11-03-49-37-031",
-        "GPT-NEOX-20B" : "jumpstart-dft-hf-textgeneration-gpt2",
+        "GPT-J" : "gptj-acc-2023-03-13-02-32-01-649", #"gpt-j-deploy-2023-01-21-20-01-49-923",
+        "ALEXA-20B" : "jumpstart-dft-pt-textgeneration1-alexa20b",
+        "GPT-NEOX-20B" : "gpt-neox-djl20-acc-2023-03-14-03-14-09-293-endpoint",
         "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
         "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
 
