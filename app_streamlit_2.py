@@ -14,7 +14,8 @@ if 'dict_endpoint' not in st.session_state:
         "ALEXA-20B" : "jumpstart-dft-pt-textgeneration1-alexa20b",
         "GPT-NEOX-20B" : "gpt-neox-djl20-acc-2023-03-14-03-14-09-293-endpoint",
         "STABLE-DIFFUSION" : "AIGC-Quick-Kit-8f46c6b9-be46-48a0-b7b6-6c01dacedcd6",
-        "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7"
+        "BLOOM-1b7": "jumpstart-dft-hf-textgeneration-bloom-1b7",
+        "CHATGLM-6B": "chatglm-inference-2023-05-09-10-08-10-446"
 
     }
 
@@ -58,6 +59,8 @@ def generate_text(payload, endpoint_name_str):
         text = parse_gpt_neox_response(result)
     elif endpoint_name_radio == 'GPT-J':
         text = parse_gpt_response(result) # - result[0]['generated_text']
+    elif endpoint_name_radio == 'ChatGlM-6B':
+        text = parse_glm_response(result) # - result[0]['generated_text']
     else :
         text = parse_bloom_response(result)
     return text
@@ -132,9 +135,10 @@ with tab1:
             'ALEXA-20B',
             'GPT-NEOX-20B',
             #'STABLE-DIFFUSION',
-            'BLOOM-1b7'
+            'BLOOM-1b7',
+            'CHATGLM-6B'
         ),
-        index=2
+        index=3
     )
 
     # mapping model to sm endpoint
@@ -238,6 +242,9 @@ def parse_alexa_response(query_response):
 def parse_gpt_response(query_response):
     return query_response[0][0]['generated_text']
 
+def parse_glm_response(query_response):
+    return query_response['answer']
+
 def parse_bloom_response(query_response):
     return query_response['generated_texts']
 
@@ -254,6 +261,8 @@ def get_params(curr_length, endpoint_name_radio):
         return get_params_stable_diffusion(curr_length)
     elif endpoint_name_radio == 'GPT-J':
         return get_params_gptj(curr_length)
+    elif endpoint_name_radio == 'CHATGLM-6B':
+        return get_params_glm(curr_length)
     else:
         return get_params_bloom(curr_length)
 
@@ -314,6 +323,21 @@ def get_params_gptj(curr_length):
 
     payload = {"inputs": [prompt,],  "parameters": params}
     print("GPT::", endpoint_name_radio, payload,curr_length)
+
+    return payload
+
+def get_params_glm(curr_length):
+    print(do_sample_st,early_stopping)
+    params = {
+        sample=True, top_p=0.45, temperature=0.7,max_length=100
+        "temperature": temp,
+        "max_length": curr_length, #len(prompt) // 4 + length + 5,
+        "do_sample": 'True' == do_sample_st , #True,
+        "top_k": 0.45
+    }
+
+    payload = {"inputs": [prompt,],  "parameters": params}
+    print("GLM::", endpoint_name_radio, payload,curr_length)
 
     return payload
 
