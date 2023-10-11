@@ -1,9 +1,27 @@
 import streamlit as st
 import pyperclip
+from func import *
+
+aos_client = OpenSearch(
+            hosts=[{'host': aos_endpoint, 'port': 443}],
+            http_auth = pwdauth,
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection)
+aos_index="metadata-index"
+
+db = SQLDatabase.from_uri(
+    "mysql+pymysql://admin:******@database-us-west-2-demo.cluster-c1qvx9wzmmcz.us-west-2.rds.amazonaws.com/llm",
+    sample_rows_in_table_info=0)
+
+
+##session 保存库表信息
+if 'table_name' not in st.session_state:
+    st.session_state['table_name']=[]
 
 # 左侧菜单栏
 st.sidebar.title("库表设置")
-
+placeholder = st.empty()
 # 多选下拉菜单
 selected_options = st.sidebar.multiselect("查询库表", ["派车单明细", "货主画像统计表", "车辆画像表","客户企业站点基础信息表",
                                                       "高德行政区域表","车辆基本属性纬度表","车辆合作关系主表",
@@ -27,23 +45,32 @@ show_message = st.checkbox("精准查询优化")
 if st.button("生成sql"):
     if show_message:
         extact_prompt ,extact_tables= get_exact_prompt(user_input)
+        st.session_state['table_name'] = extact_tables.split(",")
         if extact_prompt is not None:
-           st.write("你是要查询如下内容么？")
+           st.write("你是要查询如下内容么？"+extact_prompt)
            if st.button("复制到剪贴板"):
-              pyperclip.copy("这是一段提示文本")
+              pyperclip.copy(extact_prompt)
     result_sql = gen_sql(user_input)
-    st.area(result_sql)
+    placeholder.write(result_sql)
 
+
+## logic function
 def gen_sql(user_input:str):
-    ##sqlDataBaseChain生成sql
-    ##返回sql query
+    db = SQLDatabase.from_uri(
+        "mysql+pymysql://admin:admin12345678@database-us-west-2-demo.cluster-c1qvx9wzmmcz.us-west-2.rds.amazonaws.com/llm",
+        sample_rows_in_table_info=0,
+        include_tables=[table_name])
+
+    db_chain = CustomerizedSQLDatabaseChain.from_llm(sm_sql_llm, db, verbose=True, return_sql=True,return_intermediate_steps=False)
+    response=db_chain.run(user_input)
+    return response
 
 def get_exact_prompt(input:str):
     ##语义检索获取相似prompt
-    similiary_prompts = aos_knn_search(input)
+    similiary_prompts = aos_knn_search(aos_client, "query_desc_embedding",query_embedding[0], aos_index, size=10)
     ##返回最相似prompt string
     if len(similiary_prompts)>1:
-       return similiary_prompts["table_name"],similiary_prompts["query_string"]
+       return similiary_prompts[0]["table_name"].strip(),similiary_prompts[0]["query_string"].strip()
     else:
        return None
 
@@ -64,5 +91,5 @@ value_mapping = {
 # 确认按钮（映射到字典）
 def get_table_mapping():
     selected_values = [value_mapping[option] for option in selected_options]
-    st.success("确认查询库表：", selected_values)
+    st.session_state['table_name']=selected_values
 
