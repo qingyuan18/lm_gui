@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 from requests_aws4auth import AWS4Auth
 import os
+from botocore.config import Config
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from langchain.vectorstores import OpenSearchVectorSearch
 from langchain import PromptTemplate, SagemakerEndpoint
@@ -27,6 +28,17 @@ from langchain.callbacks.manager import (
     CallbackManagerForChainRun
 )
 from langchain.llms.bedrock import Bedrock
+
+
+
+aos_endpoint="vpc-llm-rag-aos-seg3mzhpp76ncpxezdqtcsoiga.us-west-2.es.amazonaws.com"
+embedding_endpoint_name="bge-zh-15-2023-09-25-07-02-01-080-endpoint"
+region='us-west-2'
+username="admin"
+passwd="****"
+index_name="metadata-index"
+
+size=10
 
 class CustomerizedSQLDatabaseChain(SQLDatabaseChain):
 
@@ -163,6 +175,37 @@ def run_query(query):
     response=db_chain.run(question)
     return response
 
+
+
+def aos_knn_searc_v2(client, field,q_embedding, index, size=1):
+    if not isinstance(client, OpenSearch):
+        client = OpenSearch(
+            hosts=[{'host': aos_endpoint, 'port': 443}],
+            http_auth = pwdauth,
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection
+        )
+    query = {
+        "size": size,
+        "query": {
+            "knn": {
+                field: {
+                    "vector": q_embedding,
+                    "k": size
+                }
+            }
+        }
+    }
+    opensearch_knn_respose = []
+    query_response = client.search(
+        body=query,
+        index=index
+    )
+    opensearch_knn_respose = [{'idx':item['_source'].get('idx',1),'database_name':item['_source']['database_name'],'table_name':item['_source']['table_name'],'query_desc_text':item['_source']['exactly_query_text'],"score":item["_score"]}  for item in query_response["hits"]["hits"]]
+    return opensearch_knn_respose
+
+
 def aos_knn_search(client, field,q_embedding, index, size=1):
     if not isinstance(client, OpenSearch):
         client = OpenSearch(
@@ -297,3 +340,137 @@ def k_nn_ingestion_by_aos(docs,index,hostname,username,passwd):
         query_desc_text = doc["query_desc_text"]
         document = { "query_desc_embedding": query_desc_embedding, 'database_name':database_name, "table_name": table_name,"query_desc_text":query_desc_text}
         search.index(index=index, body=document)
+
+def k_nn_ingestion_by_aos_v2(docs,index,hostname,username,passwd):
+    auth = (username, passwd)
+    search = OpenSearch(
+        hosts = [{'host': aos_endpoint, 'port': 443}],
+        ##http_auth = awsauth ,
+        http_auth = auth ,
+        use_ssl = True,
+        verify_certs = True,
+        connection_class = RequestsHttpConnection
+    )
+    for doc in docs:
+        exactly_query_embedding = doc['exactly_query_embedding']
+        database_name = doc['database_name']
+        table_name = doc['table_name']
+        exactly_query_text = doc["exactly_query_text"]
+        document = { "exactly_query_embedding": exactly_query_embedding, 'database_name':database_name, "table_name": table_name,"exactly_query_text":exactly_query_text}
+        search.index(index=index, body=document)
+
+
+def get_bedrock_client(
+        assumed_role: Optional[str] = None,
+        region: Optional[str] = None,
+        runtime: Optional[bool] = True,
+    ):
+
+    if region is None:
+        target_region = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION"))
+    else:
+        target_region = region
+
+    print(f"Create new client\n  Using region: {target_region}")
+    session_kwargs = {"region_name": target_region}
+    client_kwargs = {**session_kwargs}
+
+    profile_name = os.environ.get("AWS_PROFILE")
+    if profile_name:
+        print(f"  Using profile: {profile_name}")
+        session_kwargs["profile_name"] = profile_name
+
+    retry_config = Config(
+        region_name=target_region,
+        retries={
+            "max_attempts": 10,
+            "mode": "standard",
+        },
+    )
+    session = boto3.Session(**session_kwargs)
+
+    if assumed_role:
+        print(f"  Using role: {assumed_role}", end='')
+        sts = session.client("sts")
+        response = sts.assume_role(
+            RoleArn=str(assumed_role),
+            RoleSessionName="langchain-llm-1"
+        )
+        print(" ... successful!")
+        client_kwargs["aws_access_key_id"] = response["Credentials"]["AccessKeyId"]
+        client_kwargs["aws_secret_access_key"] = response["Credentials"]["SecretAccessKey"]
+        client_kwargs["aws_session_token"] = response["Credentials"]["SessionToken"]
+
+
+    if runtime:
+        service_name='bedrock-runtime'
+    else:
+        service_name='bedrock'
+
+    client_kwargs["aws_access_key_id"] = os.environ.get("AWS_ACCESS_KEY_ID","")
+    client_kwargs["aws_secret_access_key"] = os.environ.get("AWS_SECRET_ACCESS_KEY","")
+
+    bedrock_client = session.client(
+        service_name=service_name,
+        config=retry_config,
+        **client_kwargs
+    )
+
+    print("boto3 Bedrock client successfully created!")
+    print(bedrock_client._endpoint)
+    return bedrock_client
+
+
+
+    ## for aksk bedrock
+def get_bedrock_aksk(secret_name='chatbot_bedrock', region_name = "us-west-2"):
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    # Decrypts secret using the associated KMS key.
+    secret = json.loads(get_secret_value_response['SecretString'])
+    return secret['BEDROCK_ACCESS_KEY'],secret['BEDROCK_SECRET_KEY']
+
+ACCESS_KEY, SECRET_KEY=get_bedrock_aksk()
+
+
+#role based initial client#######
+os.environ["AWS_DEFAULT_REGION"] = "us-west-2"  # E.g. "us-east-1"
+os.environ["AWS_PROFILE"] = "default"
+#os.environ["BEDROCK_ASSUME_ROLE"] = "arn:aws:iam::687912291502:role/service-role/AmazonSageMaker-ExecutionRole-20211013T113123"  # E.g. "arn:aws:..."
+os.environ["AWS_ACCESS_KEY_ID"]=ACCESS_KEY
+os.environ["AWS_SECRET_ACCESS_KEY"]=SECRET_KEY
+
+
+#新boto3 sdk只能session方式初始化bedrock
+boto3_bedrock = get_bedrock_client(
+    #assumed_role=os.environ.get("BEDROCK_ASSUME_ROLE", None),
+    region=os.environ.get("AWS_DEFAULT_REGION", None)
+)
+
+parameters_bedrock = {
+    "max_tokens_to_sample": 2048,
+    #"temperature": 0.5,
+    "temperature": 0,
+    #"top_k": 250,
+    #"top_p": 1,
+    "stop_sequences": ["\n\nHuman"],
+}
+
+bedrock_llm = Bedrock(model_id="anthropic.claude-v2", client=boto3_bedrock, model_kwargs=parameters_bedrock)
+###test the bedrock langchain integration###
+#bedrock_llm.predict("Human:how do you describe LLM?\n"+
+#           "Assistant:")

@@ -19,7 +19,7 @@ db = SQLDatabase.from_uri(
 if 'table_name' not in st.session_state:
     st.session_state['table_name']=[]
 
-# 左侧菜单栏
+###############################左侧菜单栏#################
 st.sidebar.title("库表设置")
 placeholder = st.empty()
 # 多选下拉菜单
@@ -32,11 +32,12 @@ if st.sidebar.button("确认查询库表"):
     get_table_mapping()
 
 
-# 右侧内容区域
+############################右侧内容区域###################
 st.title("sql生成")
-
 # 文本输入框
-user_input = st.text_input("你要查询什么？", "")
+prompt_container = st.empty()
+user_input=prompt_container.text_input("查询库表",max_chars=100)
+#user_input = st.text_input("你要查询什么？", "")
 
 # 单选框
 show_message = st.checkbox("精准查询优化")
@@ -44,12 +45,14 @@ show_message = st.checkbox("精准查询优化")
 # 确认按钮（右侧）
 if st.button("生成sql"):
     if show_message:
-        extact_prompt ,extact_tables= get_exact_prompt(user_input)
-        st.session_state['table_name'] = extact_tables.split(",")
+        extact_prompt ,extact_tables = get_exact_prompt(user_input)
+        if extact_tables is Not None:
+            st.session_state['table_name'] = extact_tables.split(",")
         if extact_prompt is not None:
-           st.write("你是要查询如下内容么？"+extact_prompt)
-           if st.button("复制到剪贴板"):
-              pyperclip.copy(extact_prompt)
+           st.write("你是要查询类似内容么？"+extact_prompt)
+           if st.button("复制并修改"):
+              prompt_container.empty()
+              prompt_container.text_input("查询库表",max_chars=100,value=extact_prompt)
     result_sql = gen_sql(user_input)
     placeholder.write(result_sql)
 
@@ -67,10 +70,10 @@ def gen_sql(user_input:str):
 
 def get_exact_prompt(input:str):
     ##语义检索获取相似prompt
-    similiary_prompts = aos_knn_search(aos_client, "query_desc_embedding",query_embedding[0], aos_index, size=10)
+    similiary_prompts = aos_knn_searc_v2(aos_client, "exactly_query_embedding",query_embedding[0], aos_index, size=10)
     ##返回最相似prompt string
     if len(similiary_prompts)>1:
-       return similiary_prompts[0]["table_name"].strip(),similiary_prompts[0]["query_string"].strip()
+       return similiary_prompts[0]["table_name"].strip(),similiary_prompts[0]["exactly_query_text"].strip()
     else:
        return None
 
@@ -92,4 +95,5 @@ value_mapping = {
 def get_table_mapping():
     selected_values = [value_mapping[option] for option in selected_options]
     st.session_state['table_name']=selected_values
+    st.success("查询库表设置为"+selected_values)
 
