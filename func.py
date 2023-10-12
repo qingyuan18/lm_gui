@@ -1,10 +1,13 @@
 import boto3
 import json
+import sagemaker
 import requests
 import time
 from collections import defaultdict
 from requests_aws4auth import AWS4Auth
 import os
+from typing import Dict
+from typing import Any, Dict, List, Optional
 from botocore.config import Config
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from langchain.vectorstores import OpenSearchVectorSearch
@@ -12,6 +15,7 @@ from langchain import PromptTemplate, SagemakerEndpoint
 from langchain.chains.question_answering import load_qa_chain
 from langchain.embeddings import SagemakerEndpointEmbeddings
 from langchain.llms.sagemaker_endpoint import ContentHandlerBase
+from langchain.llms.sagemaker_endpoint import LLMContentHandler
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferWindowMemory
 from langchain import LLMChain
@@ -35,10 +39,62 @@ aos_endpoint="vpc-llm-rag-aos-seg3mzhpp76ncpxezdqtcsoiga.us-west-2.es.amazonaws.
 embedding_endpoint_name="bge-zh-15-2023-09-25-07-02-01-080-endpoint"
 region='us-west-2'
 username="admin"
-passwd="****"
+passwd=""
 index_name="metadata-index"
 
+
+credentials = boto3.Session().get_credentials()
+region = boto3.Session().region_name
+awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, 'es', session_token=credentials.token)
+pwdauth = (username, passwd)
 size=10
+
+sess = sagemaker.Session()
+sagemaker_session_bucket=None
+if sagemaker_session_bucket is None and sess is not None:
+    sagemaker_session_bucket = sess.default_bucket()
+try:
+    role = sagemaker.get_execution_role()
+except ValueError:
+    iam = boto3.client('iam')
+    role = iam.get_role(RoleName='sagemaker_execution_role')['Role']['Arn']
+sess = sagemaker.Session(default_bucket=sagemaker_session_bucket)
+sm_client = boto3.client("sagemaker-runtime")
+
+### for sqlcoder
+class TextGenContentHandler2(LLMContentHandler):
+    content_type = "application/json"
+    accepts = "application/json"
+
+    def transform_input(self, prompt: str, model_kwargs: Dict) -> bytes:
+        input_str = json.dumps({
+                "inputs": prompt,
+                "parameters": model_kwargs
+            })
+        return input_str.encode('utf-8')
+
+    def transform_output(self, output: bytes) -> str:
+        response_json = json.loads(output.read().decode("utf-8"))
+        #print(response_json)
+        #sql_result=response_json["outputs"].split("```sql")[-1].split("```")[0].split(";")[0].strip().replace("\\n"," ") + ";"
+        sql_result=response_json["outputs"]
+        return sql_result
+
+content_hander2=TextGenContentHandler2()
+parameters = {
+  "max_new_tokens": 350,
+  #"do_sample":False,
+  #"temperatual" : 0
+  #"no_repeat_ngram_size": 2,
+}
+sm_sql_llm=SagemakerEndpoint(
+        endpoint_name="sqlcoder-2023-10-07-01-50-46-950-endpoint",
+        region_name="us-west-2",
+        model_kwargs=parameters,
+        content_handler=content_hander2
+)
+
+
 
 class CustomerizedSQLDatabaseChain(SQLDatabaseChain):
 
@@ -177,7 +233,7 @@ def run_query(query):
 
 
 
-def aos_knn_searc_v2(client, field,q_embedding, index, size=1):
+def aos_knn_search_v2(client, field,q_embedding, index, size=1):
     if not isinstance(client, OpenSearch):
         client = OpenSearch(
             hosts=[{'host': aos_endpoint, 'port': 443}],
@@ -202,7 +258,7 @@ def aos_knn_searc_v2(client, field,q_embedding, index, size=1):
         body=query,
         index=index
     )
-    opensearch_knn_respose = [{'idx':item['_source'].get('idx',1),'database_name':item['_source']['database_name'],'table_name':item['_source']['table_name'],'query_desc_text':item['_source']['exactly_query_text'],"score":item["_score"]}  for item in query_response["hits"]["hits"]]
+    opensearch_knn_respose = [{'idx':item['_source'].get('idx',1),'database_name':item['_source']['database_name'],'table_name':item['_source']['table_name'],'exactly_query_text':item['_source']['exactly_query_text'],"score":item["_score"]}  for item in query_response["hits"]["hits"]]
     return opensearch_knn_respose
 
 
